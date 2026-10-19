@@ -1,0 +1,47 @@
+name: Collect announcements
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r collector/requirements.txt
+      - name: Collect
+        run: python collector/collect.py
+      - name: Revert if only metadata changed
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          try:
+              old = json.loads(subprocess.check_output(["git", "show", "HEAD:docs/data/events.json"]))
+          except subprocess.CalledProcessError:
+              raise SystemExit(0)
+          new = json.load(open("docs/data/events.json", encoding="utf-8"))
+          if old.get("events") == new.get("events"):
+              subprocess.run(["git", "checkout", "--", "docs/data/events.json"], check=True)
+              print("no event changes")
+          PY
+      - name: Commit data if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/data/events.json
+          if git diff --staged --quiet; then
+            echo "no data changes"
+          else
+            git commit -m "chore: update announcement data"
+            git push
+          fi
