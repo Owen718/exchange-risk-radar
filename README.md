@@ -1,6 +1,8 @@
 # Exchange Risk Radar
 
-交易所风险雷达：把 Binance、Bithumb 的公开公告整理成可筛选的事件流，先验证“监控 + 分类 + 展示”的效果。
+交易所风险雷达：把多家交易所的公开公告整理成可筛选的事件流，先验证“监控 + 分类 + 展示”的效果。
+
+线上页面：https://owen718.github.io/exchange-risk-radar/
 
 ## 现在有什么
 
@@ -23,6 +25,8 @@
 ## 北美 VPS 注意
 
 Binance.com、Bybit、MEXC 等会按地区拒绝部分 IP（常见 HTTP 403/451）。采集器会逐源记录状态，失败不会影响其他源。页面上红色数据源标签就是失败源。若北美 VPS 访问不了关键源，可以把采集器放到允许的地区，或只依赖 Coinbase/Kraken/Bithumb 等当前可用的源。
+
+本次 GitHub Actions（美国）实测：Binance、Bithumb、OKX、Bitget、KuCoin、Gate、Coinbase Status、Kraken Status 可用；Bybit 403、MEXC 403/404、Crypto.com 404。数据源失败会在页面上标红，不影响其他源。
 
 ## 本地运行
 
