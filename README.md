@@ -8,6 +8,7 @@
 
 - `collector/collect.py`：抓取 Binance、Bithumb、Bybit、OKX、Bitget、KuCoin、Gate、MEXC、Crypto.com、Coinbase Status、Kraken Status 的公开公告，分类、抽取代币、合并历史事件，写入 `docs/data/events.json`。
 - `docs/`：纯静态网页，读取 `events.json`，支持按重点/事件类型、交易所、关键词筛选，60 秒自动刷新。
+- 标题统一用中文展示；韩语/英语原文可以通过页面上的“显示原文”开关查看。
 - GitHub Pages 只托管静态页面；采集器可以在本机、VPS 或 GitHub Actions 运行。
 
 ## 资源占用

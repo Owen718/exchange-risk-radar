@@ -7,6 +7,7 @@ const state = {
   type: "important",
   exchange: "all",
   query: "",
+  showOriginal: false,
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -78,15 +79,16 @@ function renderCard(ev) {
 
   const h2 = document.createElement("h2");
   const url = safeUrl(ev.url);
+  const shownTitle = ev.display_title || ev.title || "(无标题)";
   if (url) {
     const a = document.createElement("a");
     a.href = url;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
-    a.textContent = ev.title || "(无标题)";
+    a.textContent = shownTitle;
     h2.appendChild(a);
   } else {
-    h2.textContent = ev.title || "(无标题)";
+    h2.textContent = shownTitle;
   }
   card.appendChild(h2);
 
@@ -95,6 +97,13 @@ function renderCard(ev) {
     p.className = "summary";
     p.textContent = ev.summary;
     card.appendChild(p);
+  }
+
+  if (state.showOriginal && ev.title && ev.title !== shownTitle) {
+    const original = document.createElement("p");
+    original.className = "original-title";
+    original.textContent = `原文：${ev.title}`;
+    card.appendChild(original);
   }
 
   const bottom = document.createElement("div");
@@ -137,6 +146,7 @@ function filtered() {
     if (state.exchange !== "all" && ev.exchange !== state.exchange) return false;
     if (!q) return true;
     const hay = [
+      ev.display_title,
       ev.title,
       ev.summary,
       ev.exchange,
@@ -260,6 +270,10 @@ function bind() {
   });
   $("#search").addEventListener("input", (e) => {
     state.query = e.target.value;
+    render();
+  });
+  $("#show-original").addEventListener("change", (e) => {
+    state.showOriginal = e.target.checked;
     render();
   });
 }

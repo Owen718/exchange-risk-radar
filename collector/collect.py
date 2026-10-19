@@ -52,7 +52,8 @@ LISTING_RE = re.compile(
     re.I,
 )
 MAINT_RE = re.compile(
-    r"(maintenance|suspension|suspend|outage|degraded|incident|입출금|점검|deposit|withdrawal|暂停|维护)",
+    r"(maintenance|suspension|suspend|outage|degraded|incident|"
+    r"입출금|입금|출금|중지|재개|점검|네트워크\s*전환|deposit|withdrawal|暂停|维护)",
     re.I,
 )
 SYMBOL_RE = re.compile(r"\(([A-Z0-9]{2,15})\)")
@@ -134,6 +135,37 @@ def make_summary(exchange: str, event_type: str, symbols: list[str]) -> str:
     return f"{exchange} {label}公告"
 
 
+def display_title(exchange: str, event_type: str, symbols: list[str], title: str) -> str:
+    """Chinese-first display title; original title stays in `title`."""
+    sym = "、".join(symbols)
+    if event_type == "listing":
+        if exchange == "Bithumb":
+            if "원화" in title:
+                return f"Bithumb 新增韩元市场：{sym}" if sym else "Bithumb 新增韩元市场"
+            if "BTC" in title:
+                return f"Bithumb 新增 BTC 市场：{sym}" if sym else "Bithumb 新增 BTC 市场"
+            return f"Bithumb 新增市场：{sym}" if sym else "Bithumb 新增市场"
+        return f"{exchange} 上币：{sym}" if sym else f"{exchange} 上币公告"
+    if event_type == "delisting":
+        return f"{exchange} 下架：{sym}" if sym else f"{exchange} 下架公告"
+    if event_type == "monitoring_tag":
+        return f"{exchange} 监控标签：{sym}" if sym else f"{exchange} 监控标签公告"
+    if event_type == "caution":
+        return f"{exchange} 风险警示：{sym}" if sym else f"{exchange} 风险警示"
+    if event_type == "maintenance":
+        if exchange == "Bithumb":
+            if "재개" in title:
+                return f"Bithumb 充提恢复：{sym}" if sym else "Bithumb 充提恢复"
+            if "입출금" in title or "입금" in title or "출금" in title:
+                return f"Bithumb 充提暂停：{sym}" if sym else "Bithumb 充提暂停"
+            if "점검" in title:
+                return "Bithumb 系统维护"
+        return f"{exchange} 维护/暂停：{sym}" if sym else f"{exchange} 维护/暂停公告"
+    if exchange == "Bithumb":
+        return f"Bithumb 公告：{sym}" if sym else "Bithumb 公告"
+    return title
+
+
 def build_event(
     exchange: str,
     source: str,
@@ -155,6 +187,7 @@ def build_event(
         "source": source,
         "native_id": str(native_id),
         "title": title,
+        "display_title": display_title(exchange, etype, symbols, title),
         "url": url,
         "published_at": iso(published),
         "first_seen_at": iso(now_utc()),
@@ -236,11 +269,20 @@ def fetch_bithumb(session: requests.Session) -> tuple[list[dict], dict]:
             else:
                 for item in items:
                     url = str(item.get("pc_url") or "")
+                    cats = ", ".join(item.get("categories") or [])
+                    etype = None
+                    if "마켓 추가" in cats:
+                        etype = "listing"
+                    elif "거래지원 종료" in cats or "상장폐지" in cats:
+                        etype = "delisting"
+                    elif "투자 유의" in cats:
+                        etype = "caution"
+                    elif "입출금" in cats or "점검" in cats:
+                        etype = "maintenance"
                     ev = build_event(
                         "Bithumb", "bithumb", url.rstrip("/").split("/")[-1] or str(item.get("title")),
                         str(item.get("title") or ""), url,
-                        parse_bithumb_time(item.get("published_at")),
-                        ", ".join(item.get("categories") or []),
+                        parse_bithumb_time(item.get("published_at")), cats, etype,
                     )
                     if ev:
                         events.append(ev)
@@ -534,6 +576,12 @@ def load_existing(path: Path) -> dict:
 
 def merge(existing: list[dict], incoming: list[dict]) -> list[dict]:
     by_id = {e["id"]: e for e in existing if e.get("id")}
+    for old in by_id.values():
+        if not old.get("display_title"):
+            old["display_title"] = display_title(
+                old.get("exchange", ""), old.get("event_type", "other"),
+                old.get("symbols", []), old.get("title", ""),
+            )
     for e in incoming:
         old = by_id.get(e["id"])
         if old:

@@ -131,6 +131,8 @@ a:hover { color: var(--accent); }
   font-weight: 700;
 }
 .controls-right { display: flex; gap: 8px; align-items: center; }
+.toggle { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 12px; white-space: nowrap; cursor: pointer; }
+.toggle input { accent-color: var(--accent); }
 select, input[type="search"] {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -183,6 +185,14 @@ input[type="search"] { width: 230px; }
 .card h2 { font-size: 15px; line-height: 1.45; margin: 0 0 6px; font-weight: 600; }
 .card h2 a:hover { color: var(--accent); }
 .card .summary { color: var(--muted); font-size: 12.5px; margin: 0 0 8px; }
+.card .original-title {
+  color: var(--dim);
+  font-size: 11px;
+  line-height: 1.45;
+  margin: 0 0 8px;
+  padding-left: 8px;
+  border-left: 2px solid var(--line);
+}
 .card-bottom { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .symbols { display: flex; gap: 6px; flex-wrap: wrap; }
 .symbol {
